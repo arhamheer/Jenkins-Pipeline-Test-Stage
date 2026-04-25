@@ -134,6 +134,9 @@ unknown - PASSED
                 } catch (Exception e) {
                     echo "Failed to send email: ${e.message}"
                 }
+
+                // Prevent next checkout failures by returning ownership to Jenkins UID/GID.
+                sh 'chown -R 1000:1000 "${WORKSPACE}" || true'
             }
         }
     }
