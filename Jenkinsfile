@@ -99,11 +99,16 @@ ${details}
 """
 
                 if (recipientList) {
-                    emailext(
-                        to: recipientList,
-                        subject: "Build #${env.BUILD_NUMBER} Test Results",
-                        body: emailBody
-                    )
+                    try {
+                        emailext(
+                            to: recipientList,
+                            subject: "Build #${env.BUILD_NUMBER} Test Results",
+                            body: emailBody
+                        )
+                        echo "Email sent to: ${recipientList}"
+                    } catch (Exception e) {
+                        echo "Email notification failed: ${e.getMessage()}"
+                    }
                 } else {
                     echo "No valid committer email found in git metadata. Skipping email notification."
                 }
