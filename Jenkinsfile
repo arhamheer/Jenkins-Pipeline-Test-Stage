@@ -83,14 +83,19 @@ pipeline {
                         echo "Reading test report: ${reportFile}"
                         def xml = readFile(file: reportFile.trim())
                         
-                        (xml =~ /<testcase[^>]*classname="([^"]*)"[^>]*name="([^"]*)"[^>]*>([^<]*)/m).each { match ->
+                        (xml =~ /<testcase[^>]*classname="([^"]*)"[^>]*name="([^"]*)"/).each { match ->
                             total++
                             def className = match[1]
                             def testName = match[2]
-                            if (xml.contains(testName) && (xml.substring(xml.indexOf(testName)) =~ /<failure|<error/)) {
+                            
+                            def startIdx = xml.indexOf("name=\"${testName}\"")
+                            def endIdx = xml.indexOf("</testcase>", startIdx)
+                            def testcaseSection = xml.substring(startIdx, endIdx)
+                            
+                            if (testcaseSection.contains("<failure") || testcaseSection.contains("<error")) {
                                 failed++
                                 details += "${className}.${testName} - FAILED\n"
-                            } else if (xml.contains(testName) && (xml.substring(xml.indexOf(testName)) =~ /<skipped/)) {
+                            } else if (testcaseSection.contains("<skipped")) {
                                 skipped++
                                 details += "${className}.${testName} - SKIPPED\n"
                             } else {
