@@ -73,38 +73,39 @@ pipeline {
                 int skipped = 0
                 def details = ""
 
-                def reportList = sh(
-                    script: "find . -path '*/target/surefire-reports/*.xml' -type f 2>/dev/null | sort -u",
-                    returnStdout: true
-                ).trim()
+                try {
+                    def testReports = sh(
+                        script: "find . -name 'TEST-*.xml' -path '*/target/surefire-reports/*' 2>/dev/null",
+                        returnStdout: true
+                    ).trim().split('\n').findAll { it.trim() }
 
-                reportList.split('\n').findAll { it }.each { path ->
-                    def cleanedPath = path.replaceFirst('^\\.\\/', '')
-                    def xml = readFile(file: cleanedPath)
-                    def testcases = (xml =~ /(?s)<testcase\b[^>](?:\/>|>.?<\/testcase>)/)
-                    testcases.each { match ->
-                        def testcase = match[0]
-                        total++
-                        def classMatch = (testcase =~ /classname="([^"]*)"/)
-                        def testMatch = (testcase =~ /name="([^"]*)"/)
-                        def className = classMatch.find() ? classMatch.group(1) : ""
-                        def testName = testMatch.find() ? testMatch.group(1) : "unknown"
-                        def name = className ? "${className}.${testName}" : testName
-                        if (testcase.contains("<failure") || testcase.contains("<error")) {
-                            failed++
-                            details += "${name} - FAILED\n"
-                        } else if (testcase.contains("<skipped")) {
-                            skipped++
-                            details += "${name} - SKIPPED\n"
-                        } else {
-                            passed++
-                            details += "${name} - PASSED\n"
+                    testReports.each { reportFile ->
+                        echo "Reading test report: ${reportFile}"
+                        def xml = readFile(file: reportFile.trim())
+                        
+                        (xml =~ /<testcase[^>]*classname="([^"]*)"[^>]*name="([^"]*)"[^>]*>([^<]*)/m).each { match ->
+                            total++
+                            def className = match[1]
+                            def testName = match[2]
+                            if (xml.contains(testName) && (xml.substring(xml.indexOf(testName)) =~ /<failure|<error/)) {
+                                failed++
+                                details += "${className}.${testName} - FAILED\n"
+                            } else if (xml.contains(testName) && (xml.substring(xml.indexOf(testName)) =~ /<skipped/)) {
+                                skipped++
+                                details += "${className}.${testName} - SKIPPED\n"
+                            } else {
+                                passed++
+                                details += "${className}.${testName} - PASSED\n"
+                            }
                         }
                     }
-                }
 
-                if (!details) {
-                    details = "No Surefire test report was found.\n"
+                    if (total == 0) {
+                        details = "No tests found in test reports.\n"
+                    }
+                } catch (Exception e) {
+                    echo "Error reading test reports: ${e.message}"
+                    details = "Could not parse test reports.\n"
                 }
 
                 def emailBody = """Test Summary (Build #${env.BUILD_NUMBER})
@@ -118,11 +119,16 @@ Detailed Results:
 ${details}
 """
 
-                emailext(
-                    to: committer,
-                    subject: "Build #${env.BUILD_NUMBER} Test Results",
-                    body: emailBody
-                )
+                try {
+                    emailext(
+                        to: committer,
+                        subject: "Build #${env.BUILD_NUMBER} Test Results",
+                        body: emailBody
+                    )
+                    echo "Email sent to: ${committer}"
+                } catch (Exception e) {
+                    echo "Failed to send email: ${e.message}"
+                }
             }
         }
     }
