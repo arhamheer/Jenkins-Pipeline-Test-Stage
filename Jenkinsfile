@@ -115,13 +115,13 @@ pipeline {
 
                 def emailBody = """Test Summary (Build #${env.BUILD_NUMBER})
 
-Total Tests:   1
-Passed:        1
+Total Tests:   ${total}
+Passed:        ${passed}
 Failed:        ${failed}
 Skipped:       ${skipped}
 
 Detailed Results:
-unknown - PASSED
+${details}
 """
 
                 try {
