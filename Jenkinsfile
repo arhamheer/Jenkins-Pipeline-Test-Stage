@@ -9,6 +9,8 @@ pipeline {
     stages {
         stage('Clone Repository') {
             steps {
+                // Fix workspace permissions before checkout
+                sh 'chown -R 1000:1000 "${WORKSPACE}" || true'
                 checkout scm
             }
         }
