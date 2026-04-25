@@ -121,7 +121,7 @@ Failed:        ${failed}
 Skipped:       ${skipped}
 
 Detailed Results:
-unknown - PASSED
+Summary - PASSED
 """
 
                 try {
