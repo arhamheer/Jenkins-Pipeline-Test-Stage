@@ -1,10 +1,10 @@
 pipeline {
     agent {
-    docker {
-        image 'markhobson/maven-chrome'
-        args '--shm-size=2g -u 1000:1000 -v /var/lib/jenkins/.m2:/home/jenkins/.m2'
+        docker {
+            image 'markhobson/maven-chrome'
+            args '--shm-size=2g -u root:root -v /var/lib/jenkins/.m2:/root/.m2'
+        }
     }
-}
 
     stages {
         stage('Clone Repository') {
@@ -19,6 +19,14 @@ pipeline {
                     set -eux
                     google-chrome --version
                     chromedriver --version
+                    
+                    CHROME_VER=$(google-chrome --version | grep -oE '[0-9]+' | head -1)
+                    DRIVER_VER=$(chromedriver --version | grep -oE '[0-9]+' | head -1)
+                    
+                    if [ "$CHROME_VER" != "$DRIVER_VER" ]; then
+                        echo "WARNING: Chrome ($CHROME_VER) and ChromeDriver ($DRIVER_VER) versions mismatch!"
+                    fi
+                    
                     timeout 30s google-chrome \
                       --headless \
                       --no-sandbox \
@@ -115,13 +123,13 @@ pipeline {
 
                 def emailBody = """Test Summary (Build #${env.BUILD_NUMBER})
 
-Total Tests:   1
-Passed:        1
+Total Tests:   ${total}
+Passed:        ${passed}
 Failed:        ${failed}
 Skipped:       ${skipped}
 
 Detailed Results:
-Summary - PASSED
+${details}
 """
 
                 try {
@@ -135,7 +143,6 @@ Summary - PASSED
                     echo "Failed to send email: ${e.message}"
                 }
 
-                // Prevent next checkout failures by returning ownership to Jenkins UID/GID.
                 sh 'chown -R 1000:1000 "${WORKSPACE}" || true'
             }
         }
