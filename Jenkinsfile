@@ -50,6 +50,8 @@ pipeline {
 
         stage('Publish Test Results') {
             steps {
+                sh 'echo "DEBUG: Listing all XML files in workspace:" && find . -name "*.xml" -type f 2>/dev/null | head -20'
+                sh 'echo "DEBUG: Listing target/surefire-reports:" && ls -la */target/surefire-reports/ 2>/dev/null || echo "Not found"'
                 junit allowEmptyResults: true, testResults: '**/target/surefire-reports/*.xml'
             }
         }
