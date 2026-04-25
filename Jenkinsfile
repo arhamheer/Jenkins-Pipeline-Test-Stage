@@ -7,10 +7,17 @@ pipeline {
     }
     
     stages {
-        stage('Clean & Clone') {
+        stage('Fix Permissions') {
             steps {
-                // NUCLEAR OPTION: Wipe everything before checkout
-                deleteDir()
+                // Fix workspace ownership so root can work with it
+                sh 'chmod -R 777 "${WORKSPACE}" || true'
+            }
+        }
+        
+        stage('Clone Repository') {
+            steps {
+                // Remove .git if it exists from previous failed run
+                sh 'rm -rf .git || true'
                 
                 git branch: 'main', 
                     url: 'https://github.com/arhamheer/Jenkins-Pipeline-Test-Stage.git'
@@ -87,8 +94,8 @@ ${details}
                     body: emailBody
                 )
                 
-                // CRITICAL: Fix permissions for NEXT build
-                sh 'chmod -R 777 . || true'
+                // Make workspace writable for next Jenkins build
+                sh 'chmod -R 777 "${WORKSPACE}" || true'
             }
         }
     }
