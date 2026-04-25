@@ -7,8 +7,11 @@ pipeline {
     }
     
     stages {
-        stage('Clone Repository') {
+        stage('Clean & Clone') {
             steps {
+                // NUCLEAR OPTION: Wipe everything before checkout
+                deleteDir()
+                
                 git branch: 'main', 
                     url: 'https://github.com/arhamheer/Jenkins-Pipeline-Test-Stage.git'
             }
@@ -83,6 +86,9 @@ ${details}
                     subject: "Build #${env.BUILD_NUMBER} - Test Results",
                     body: emailBody
                 )
+                
+                // CRITICAL: Fix permissions for NEXT build
+                sh 'chmod -R 777 . || true'
             }
         }
     }
