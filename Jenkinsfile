@@ -2,15 +2,22 @@ pipeline {
     agent {
         docker {
             image 'markhobson/maven-chrome'
-            args '--shm-size=2g -u root:root -v /var/lib/jenkins/.m2:/root/.m2'
+            // Match container user to host jenkins user to avoid permission issues
+            args '--shm-size=2g -u 1000:1000 -v /var/lib/jenkins/.m2:/tmp/.m2'
         }
     }
 
+    options {
+        // Skip the default checkout - we'll handle it ourselves
+        skipDefaultCheckout(true)
+    }
+
     stages {
-        stage('Clone Repository') {
+        stage('Prepare Workspace') {
             steps {
-                // Fix workspace permissions before checkout
-                sh 'chown -R 1000:1000 "${WORKSPACE}" || true'
+                // Clean workspace to avoid stale lock files
+                cleanWs()
+                // Now checkout fresh
                 checkout scm
             }
         }
@@ -144,8 +151,6 @@ ${details}
                 } catch (Exception e) {
                     echo "Failed to send email: ${e.message}"
                 }
-
-                sh 'chown -R 1000:1000 "${WORKSPACE}" || true'
             }
         }
     }
