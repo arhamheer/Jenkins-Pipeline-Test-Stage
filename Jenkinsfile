@@ -30,10 +30,31 @@ pipeline {
         always {
             script {
                 sh "git config --global --add safe.directory ${env.WORKSPACE}"
-                def committer = sh(
-                    script: "git log -1 --pretty=format:'%ae'",
-                    returnStdout: true
-                ).trim()
+                def emailsRaw = ""
+
+                if (env.GIT_PREVIOUS_SUCCESSFUL_COMMIT?.trim() && env.GIT_COMMIT?.trim()) {
+                    emailsRaw = sh(
+                        script: "git log --format='%ae' ${env.GIT_PREVIOUS_SUCCESSFUL_COMMIT}..${env.GIT_COMMIT}",
+                        returnStdout: true
+                    ).trim()
+                }
+
+                if (!emailsRaw) {
+                    emailsRaw = sh(
+                        script: "git log -1 --pretty=format:'%ae'",
+                        returnStdout: true
+                    ).trim()
+                }
+
+                def recipients = emailsRaw
+                    .split('\n')
+                    .collect { it.trim().toLowerCase() }
+                    .findAll { it ==~ /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$/ }
+                    .unique()
+
+                def recipientList = recipients.join(',')
+
+                echo "Resolved committer recipient(s): ${recipientList ?: 'none'}"
 
                 def raw = sh(
                     script: "grep -h \"<testcase\" target/surefire-reports/*.xml",
@@ -77,11 +98,15 @@ ${details}
 
 """
 
-                emailext(
-                    to: committer,
-                    subject: "Build #${env.BUILD_NUMBER} Test Results",
-                    body: emailBody
-                )
+                if (recipientList) {
+                    emailext(
+                        to: recipientList,
+                        subject: "Build #${env.BUILD_NUMBER} Test Results",
+                        body: emailBody
+                    )
+                } else {
+                    echo "No valid committer email found in git metadata. Skipping email notification."
+                }
             }
         }
     }
