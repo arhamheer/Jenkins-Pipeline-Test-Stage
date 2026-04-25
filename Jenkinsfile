@@ -1,10 +1,10 @@
 pipeline {
     agent {
-        docker {
-            image 'markhobson/maven-chrome'
-            args '--shm-size=2g -u root:root -v /var/lib/jenkins/.m2:/root/.m2'
-        }
+    docker {
+        image 'markhobson/maven-chrome'
+        args '--shm-size=2g -u 1000:1000 -v /var/lib/jenkins/.m2:/home/jenkins/.m2'
     }
+}
 
     stages {
         stage('Clone Repository') {
