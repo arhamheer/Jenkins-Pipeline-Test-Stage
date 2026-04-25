@@ -2,14 +2,15 @@ pipeline {
     agent {
         docker {
             image 'markhobson/maven-chrome'
-            args '--shm-size=2g -v /var/lib/jenkins/.m2:/root/.m2'
-            // Removed: -u root:root
+            args '--shm-size=2g -u root:root -v /var/lib/jenkins/.m2:/root/.m2'
         }
     }
 
     stages {
         stage('Clone Repository') {
             steps {
+                // Fix workspace permissions before checkout
+                sh 'chown -R 1000:1000 "${WORKSPACE}" || true'
                 checkout scm
             }
         }
@@ -143,6 +144,8 @@ ${details}
                 } catch (Exception e) {
                     echo "Failed to send email: ${e.message}"
                 }
+
+                sh 'chown -R 1000:1000 "${WORKSPACE}" || true'
             }
         }
     }
