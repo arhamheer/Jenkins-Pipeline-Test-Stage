@@ -30,6 +30,8 @@ pipeline {
         always {
             script {
                 sh "git config --global --add safe.directory ${env.WORKSPACE}"
+                // Always notify collaborators; append committers when available.
+                def collaboratorRecipients = "qasimalik@gmail.com,mahrarihat@gmail.com"
                 def emailsRaw = ""
 
                 if (env.GIT_PREVIOUS_SUCCESSFUL_COMMIT?.trim() && env.GIT_COMMIT?.trim()) {
@@ -46,13 +48,17 @@ pipeline {
                     ).trim()
                 }
 
-                def recipients = emailsRaw
+                def committerRecipients = emailsRaw
                     .split('\n')
                     .collect { it.trim().toLowerCase() }
                     .findAll { it ==~ /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$/ }
                     .unique()
 
-                def recipientList = recipients.join(',')
+                def recipients = (collaboratorRecipients.split(',')
+                    .collect { it.trim().toLowerCase() }
+                    .findAll { it ==~ /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/ }) + committerRecipients
+
+                def recipientList = recipients.unique().join(',')
 
                 echo "Resolved committer recipient(s): ${recipientList ?: 'none'}"
 
@@ -102,6 +108,8 @@ ${details}
                     try {
                         emailext(
                             to: recipientList,
+                            from: 'mahrarihat@gmail.com',
+                            replyTo: 'mahrarihat@gmail.com',
                             subject: "Build #${env.BUILD_NUMBER} Test Results",
                             body: emailBody
                         )
