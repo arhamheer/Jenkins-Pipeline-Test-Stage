@@ -5,6 +5,7 @@ import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 import java.time.Duration;
@@ -34,11 +35,13 @@ class LoginTest {
                 .click();
 
             WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
-            boolean errorVisible = wait.until(browser -> {
-                String pageSource = browser.getPageSource();
-                return pageSource.contains("Failed to fetch")
-                    || pageSource.contains("Incorrect email or password");
-            });
+            
+            boolean errorVisible = wait.until(ExpectedConditions.or(
+                ExpectedConditions.presenceOfElementLocated(
+                    By.xpath("//*[contains(text(),'Failed to fetch')]")),
+                ExpectedConditions.presenceOfElementLocated(
+                    By.xpath("//*[contains(text(),'Incorrect email or password')]"))
+            )) != null;
 
             assertTrue(errorVisible);
         } finally {
