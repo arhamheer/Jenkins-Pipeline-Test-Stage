@@ -17,11 +17,11 @@ The Jenkins-Pipeline-Test-Stage project showcases:
 - **Pipeline**: Declarative or Scripted Jenkins Pipeline
 
 ## Key Features
-- ✅ Automated pipeline stages for build, test, and validation
-- ✅ Continuous integration testing on code commits
-- ✅ Trigger-based pipeline execution
-- ✅ Java application compilation and packaging
-- ✅ Test stage validation before deployment
+- Automated pipeline stages for build, test, and validation
+- Continuous integration testing on code commits
+- Trigger-based pipeline execution
+- Java application compilation and packaging
+- Test stage validation before deployment
 
 ## Getting Started
 
