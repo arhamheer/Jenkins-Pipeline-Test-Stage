@@ -66,23 +66,4 @@ The pipeline is configured with triggers that automatically execute when:
 - Pull requests are created
 - Scheduled pipeline runs (if configured)
 
-## Instructor
-**Qasim Malik** - Project Instructor  
-Ensures proper pipeline execution and trigger validation throughout the project lifecycle.
 
-## Repository Information
-- **Owner**: arhamheer
-- **Visibility**: Public
-- **Language**: Java
-- **Created**: 41 days ago
-- **Last Updated**: 41 days ago
-
-## Contributing
-For questions or contributions related to this Jenkins pipeline project, please contact the project maintainer or your instructor.
-
-## License
-This project is provided for educational purposes under the guidance of Qasim Malik.
-
----
-
-**Note**: This repository demonstrates best practices for implementing automated testing and deployment pipelines using Jenkins with Java applications.
